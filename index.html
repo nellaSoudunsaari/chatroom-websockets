@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatroom</title>
+</head>
+<body>
+    <h1>Reaaliaikainen viestintä-aplikaatio</h1>
+    <pre id="messages" style="height: 400px; overflow:scroll;"></pre>
+    <input type="text" id="messageBox" placeholder="Type your message here" style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;">
+    <button id="send" title="Send message!" style="width: 100%; height:30px;">
+    Send message!</button> 
+
+    <script>
+        (function () {
+            const sendBtn = document.querySelector('#send');
+            const messages = document.querySelector('#messages');
+            const messageBox = document.querySelector('#messageBox');
+
+            //luodaan muuttuja asiakkaista websockettia varten
+            let ws;
+
+            //auttaa html sivua näyttämään viestin
+            function showMessage(message) {
+                messages.textContent += `\n\n${message}`;
+                message.scrollTop = messages.scrollHeight;
+            }
+
+            function init() {
+                if(ws) {
+                    ws.onerror = ws.onopen = ws.onclose = null;
+                    ws.close();
+                }
+
+                ws = new WebSocket('ws://localhost:8080');
+                ws.onopen = () => {
+                    console.log('Connection opened!');
+                }
+                ws.onmessage = ({data}) => showMessage(data);
+                ws.onclose = function() {
+                    ws = null;
+                }
+            }
+
+            //lähettää viestin napin kautta
+            sendBtn.onclick = function() {
+                if (!ws) {
+                    showMessage("No WebSocket connection :(");
+                    return;
+                }
+
+                ws.send(messageBox.value);
+                showMessage(messageBox.value);
+                messageBox.value = '';
+            }
+
+            init();
+        })();
+
+    </script>
+</body>
+</html>
